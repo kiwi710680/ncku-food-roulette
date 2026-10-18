@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>成醫美食輪盤</title>
+<meta name="description" content="成大醫學院附近評分 4.6 以上、評論超過 200 則的店家美食輪盤，只抽現在有開的店。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ef; --card:#ffffff; --ink:#2f2622; --muted:#7a6a60; --line:#efdfcf;
+  --brand:#e8553d; --brand-ink:#ffffff; --accent:#f2a33a; --ok:#2f9e5b; --warn:#d98a0b; --off:#a7988d;
+  --chip:#fff1e2; --shadow:0 2px 0 rgba(80,40,20,.05),0 10px 30px rgba(80,40,20,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1715; --card:#26201d; --ink:#f5ece6; --muted:#b9a99f; --line:#3d332e;
+    --brand:#ff6d52; --brand-ink:#1b1715; --accent:#f5b252; --ok:#4cc47e; --warn:#f0a93a; --off:#7d6f66;
+    --chip:#332a25; --shadow:0 2px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+  font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+header{padding:32px 0 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(1.8rem,4.6vw,2.8rem);font-weight:900;line-height:1.15}
+h1 span{color:var(--brand)}
+.sub{margin:6px 0 0;color:var(--muted)}
+.clock{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:10px 16px;text-align:right;box-shadow:var(--shadow)}
+.clock b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+.clock small{display:block;color:var(--muted)}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.main{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+h2{font-size:1.15rem;margin:0 0 10px}
+.fgroup{margin-bottom:16px}
+.fgroup>label,.flabel{display:block;font-weight:700;font-size:.92rem;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--chip);border-radius:999px;padding:5px 12px;font-size:.9rem;transition:all .15s}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+.chip:hover{border-color:var(--brand)}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:none;background:transparent;padding:7px 4px;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+.timepick{display:none;gap:6px;margin-top:8px}
+.timepick.show{display:flex}
+.timepick select,.timepick input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:6px 8px}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.92rem;cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--brand)}
+.hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+.subtags{margin-top:8px;padding:10px;border-radius:12px;background:color-mix(in srgb,var(--brand) 6%,transparent)}
+.subtags[hidden]{display:none}
+
+/* 輪盤 */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:20px;align-items:center}
+.wheelbox{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:1}
+#wheel{width:100%;height:100%;display:block}
+.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;
+  border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--ink);
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));z-index:2}
+.spin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26%;aspect-ratio:1;border-radius:50%;
+  border:5px solid var(--card);background:var(--brand);color:var(--brand-ink);font-weight:900;font-size:clamp(.95rem,2.6vw,1.25rem);
+  box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:2;transition:transform .15s}
+.spin:hover{transform:translate(-50%,-50%) scale(1.05)}
+.spin:disabled{background:var(--off);cursor:not-allowed}
+.empty{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:20%;color:var(--muted);font-weight:700}
+.empty.show{display:grid}
+.count{text-align:center;color:var(--muted);margin-top:8px;font-size:.92rem}
+.count b{color:var(--ink)}
+
+.result{min-height:280px;display:flex;flex-direction:column;justify-content:center}
+.result .placeholder{color:var(--muted);text-align:center}
+.result .placeholder .big{font-size:3rem}
+.pick{animation:pop .45s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.pick .kicker{color:var(--brand);font-weight:900;letter-spacing:.06em;font-size:.85rem}
+.pick h3{font-size:1.6rem;margin:2px 0 6px;line-height:1.25}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag{font-size:.8rem;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.tag.hot{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:var(--warn)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.93rem;margin:0}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-variant-numeric:tabular-nums}
+.status{font-weight:700}
+.status.ok{color:var(--ok)} .status.warn{color:var(--warn)} .status.off{color:var(--off)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:none;border-radius:12px;padding:9px 14px;font-weight:700;background:var(--ink);color:var(--bg);text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:.92rem}
+.btn.brand{background:var(--brand);color:var(--brand-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.small{padding:5px 10px;font-size:.82rem;border-radius:9px}
+
+/* 下方 */
+.lower{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin:20px 0}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.listhead h2{margin:0}
+.search{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;min-width:0;flex:1;max-width:240px}
+.shoplist{list-style:none;margin:0;padding:0;max-height:560px;overflow:auto;border-top:1px solid var(--line)}
+.shoplist li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 4px;border-bottom:1px solid var(--line);align-items:center}
+.shoplist li.out{opacity:.5}
+.shoplist .nm{font-weight:700}
+.shoplist .nm small{font-weight:400;color:var(--muted);margin-left:6px}
+.shoplist .ln2{grid-column:1;font-size:.82rem;color:var(--muted)}
+.shoplist .ops{grid-row:1/3;grid-column:2;display:flex;gap:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.off{background:var(--off)}
+.side{display:grid;gap:20px;align-content:start}
+form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+form label{display:block;font-size:.85rem;font-weight:700;margin-bottom:10px}
+form input[type=text],form input[type=number],form select{width:100%;margin-top:3px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:7px 9px}
+.days{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.days label{margin:0;font-weight:500}
+.days input{display:none}
+.days span{display:inline-block;width:34px;text-align:center;border:1.5px solid var(--line);border-radius:8px;padding:3px 0;font-size:.85rem}
+.days input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.blist{list-style:none;padding:0;margin:0}
+.blist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.muted{color:var(--muted)}
+footer{color:var(--muted);font-size:.82rem;text-align:center;padding:10px 0 40px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,140px);background:var(--ink);color:var(--bg);padding:11px 18px;
+  border-radius:14px;font-weight:700;transition:transform .35s cubic-bezier(.2,.9,.3,1.3);z-index:10;max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translate(-50%,0)}
+
+@media (max-width:980px){
+  .main,.lower{grid-template-columns:1fr}
+  .stage{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>今天吃什麼？<br><span>成醫美食輪盤</span></h1>
+    <p class="sub">成大醫學院 1.2 公里內・Google 評分 ≥ 4.6・評論超過 200 則・只抽有開的店</p>
+  </div>
+  <div class="clock" aria-live="polite"><b id="clock">--:--</b><small id="opencount">計算中…</small></div>
+</header>
+
+<div class="main">
+  <!-- 篩選 -->
+  <aside class="card" aria-label="篩選條件">
+    <h2>篩選條件</h2>
+    <div class="fgroup">
+      <span class="flabel">什麼時候去？</span>
+      <div class="seg" id="timemode">
+        <button data-v="now" aria-pressed="true">現在</button>
+        <button data-v="custom" aria-pressed="false">指定時間</button>
+        <button data-v="any" aria-pressed="false">不限</button>
+      </div>
+      <div class="timepick" id="timepick">
+        <select id="pday" aria-label="星期"></select>
+        <input type="time" id="ptime" value="12:00" aria-label="時間">
+      </div>
+      <div class="hint" id="timehint">只抽現在營業中、而且 30 分鐘內不會打烊的店</div>
+    </div>
+    <div class="fgroup">
+      <span class="flabel">想吃哪一類？</span>
+      <div class="chips" id="groups"></div>
+      <div class="subtags" id="subwrap">
+        <span class="flabel" style="font-size:.85rem">正餐細分（不選＝全部）</span>
+        <div class="chips" id="tags"></div>
+      </div>
+    </div>
+    <div class="fgroup">
+      <span class="flabel">預算（每人）</span>
+      <div class="chips" id="budgets"></div>
+    </div>
+    <div class="fgroup">
+      <label for="dist">最遠距離：<span id="distv"></span></label>
+      <input type="range" id="dist" min="200" max="1200" step="100">
+      <div class="hint">直線距離，約每 100 公尺走 1.5 分鐘</div>
+    </div>
+    <div class="fgroup">
+      <label class="toggle"><input type="checkbox" id="noqueue"> 不想排隊（避開評論 ≥ 2000 的熱門店）</label>
+    </div>
+    <button class="btn ghost small" id="resetf">重設篩選</button>
+  </aside>
+
+  <!-- 輪盤 -->
+  <section class="card" aria-label="輪盤">
+    <div class="stage">
+      <div>
+        <div class="wheelbox">
+          <div class="pointer" aria-hidden="true"></div>
+          <canvas id="wheel" role="img" aria-label="美食輪盤"></canvas>
+          <button class="spin" id="spin">開轉！</button>
+          <div class="empty" id="empty">沒有符合條件的店😢<br>放寬一下篩選條件吧</div>
+        </div>
+        <div class="count" id="count"></div>
+      </div>
+      <div class="result" id="result" aria-live="polite">
+        <div class="placeholder"><div class="big">🍜</div>設定好條件，按中間的「開轉！」<br>讓輪盤幫你決定。</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="lower">
+  <section class="card">
+    <div class="listhead">
+      <h2>店家清單 <span class="muted" id="listcount" style="font-weight:400;font-size:.9rem"></span></h2>
+      <input class="search" id="search" type="search" placeholder="搜尋店名或類型" aria-label="搜尋店家">
+    </div>
+    <ul class="shoplist" id="shoplist"></ul>
+    <div class="actions"><button class="btn ghost small" id="restore">恢復預設店家清單</button></div>
+  </section>
+
+  <div class="side">
+    <section class="card">
+      <h2>➕ 新增店家</h2>
+      <form id="addform" autocomplete="off">
+        <label>店名<input type="text" name="name" required maxlength="40" placeholder="例如：阿婆的麵攤"></label>
+        <div class="row">
+          <label>大類<select name="group"><option value="meal">正餐</option><option value="drink">飲料</option><option value="dessert">甜點冰品</option><option value="cafe">咖啡廳</option></select></label>
+          <label>細分（正餐）<select name="tag"><option value="">不指定</option></select></label>
+        </div>
+        <div class="row">
+          <label>預算<select name="budget"><option value="1">$（200 以下）</option><option value="2" selected>$$（200–400）</option><option value="3">$$$（400 以上）</option></select></label>
+          <label>距離（公尺）<input type="number" name="dist" min="0" max="5000" step="10" value="500" required></label>
+        </div>
+        <label>營業時段<input type="text" name="hours" value="11:00-14:00, 17:00-21:00" placeholder="11:00-14:00, 17:00-21:00" required></label>
+        <span class="flabel" style="font-size:.85rem">營業日</span>
+        <div class="days" id="adddays"></div>
+        <label class="toggle" style="margin-top:10px"><input type="checkbox" name="hot"> 常常要排隊</label>
+        <div class="actions"><button class="btn brand" type="submit">加入輪盤</button></div>
+        <div class="hint" id="adderr" role="alert"></div>
+      </form>
+    </section>
+    <section class="card">
+      <h2>🚫 黑名單 <span class="muted" id="bcount" style="font-weight:400;font-size:.9rem"></span></h2>
+      <ul class="blist" id="blist"></ul>
+    </section>
+  </div>
+</div>
+
+<footer>
+  店家資料：2026-10-18 整理自 Google 地圖（評分、評論數、每人消費金額、營業時間）。營業時間可能異動，出發前請再確認。<br>
+  以 Vibe Coding 與 AI 協作完成・單一 index.html
+</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DEFAULT_SHOPS = /*SHOPS*/[{"id":"g00","name":"優氧食光","full":"優氧食光","group":"meal","tags":["早午餐","素食友善"],"budget":2,"price":"$200-400","rating":4.9,"reviews":855,"hot":false,"dist":140,"lat":23.002552,"lng":120.221597,"cat":"早午餐餐廳","addr":"長榮路四段9號1F","hours":[["10:00-15:30"],["10:00-17:00"],["10:00-17:00"],["10:00-17:00"],["10:00-17:00"],["10:00-17:00"],["10:00-14:00"]]},{"id":"g01","name":"ChillVibe","full":"ChillVibe","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.9,"reviews":380,"hot":false,"dist":190,"lat":23.003306,"lng":120.220645,"cat":"咖啡店","addr":"東豐路225號","hours":[["10:00-19:00"],["10:00-19:00"],["10:00-19:00"],["10:00-19:00"],["10:00-19:00"],["10:00-19:00"],["10:00-19:00"]]},{"id":"g02","name":"鯤島 Khuntor","full":"鯤島 Khuntor","group":"meal","tags":["異國料理","宵夜"],"budget":3,"price":"$400-1,200","rating":4.6,"reviews":1217,"hot":false,"dist":207,"lat":23.003119,"lng":120.221877,"cat":"亞洲 Fusion 菜餐廳","addr":"東豐路257號","hours":[["17:00-01:00"],["17:00-01:00"],["17:00-01:00"],["17:00-01:00"],["17:00-01:00"],["17:00-01:00"],["17:00-01:00"]]},{"id":"g03","name":"饗義廚房","full":"饗義廚房","group":"meal","tags":["西式義式"],"budget":2,"price":"$200-400","rating":4.6,"reviews":1151,"hot":false,"dist":236,"lat":23.003169,"lng":120.222256,"cat":"意大利餐廳","addr":"長榮路四段13號","hours":[["11:00-14:30","17:00-21:00"],[],[],["11:00-14:30","17:00-21:00"],["11:00-14:30","17:00-21:00"],["11:00-21:00"],["11:00-21:00"]]},{"id":"g04","name":"健康燒肉屋 貴一郎","full":"健康燒肉屋 貴一郎","group":"meal","tags":["燒肉","日式"],"budget":3,"price":"（估計）","rating":4.6,"reviews":247,"hot":false,"dist":250,"lat":23.003514,"lng":120.21941,"cat":"日式燒肉餐廳","addr":"東豐路179號","hours":[["17:30-22:30"],[],["17:30-22:30"],["17:30-22:30"],["17:30-22:30"],["17:30-22:30"],["17:30-22:30"]]},{"id":"g05","name":"麥雅印度咖喱","full":"麥雅印度咖喱 Maiya Indian Curry Halal","group":"meal","tags":["異國料理"],"budget":2,"price":"$200-400","rating":4.6,"reviews":278,"hot":false,"dist":276,"lat":23.003521,"lng":120.218987,"cat":"印度餐廳","addr":"東豐路167號","hours":[["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],[],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"]]},{"id":"g06","name":"八木茶飲-成大店","full":"八木茶飲-成大店","group":"drink","tags":[],"budget":1,"price":"$1-200","rating":4.7,"reviews":260,"hot":false,"dist":305,"lat":23.00366,"lng":120.222668,"cat":"冰品飲料店","addr":"長榮路四段40號","hours":[["09:00-21:00"],["09:00-21:00"],["09:00-21:00"],["09:00-21:00"],["09:00-21:00"],["09:00-21:00"],["09:00-21:00"]]},{"id":"g07","name":"早安勝利美","full":"早安勝利美","group":"meal","tags":["早午餐"],"budget":1,"price":"$1-200","rating":4.6,"reviews":209,"hot":false,"dist":311,"lat":23.003662,"lng":120.218654,"cat":"早餐店","addr":"東豐路161號","hours":[["05:30-12:30"],["05:30-12:30"],["05:30-12:30"],["05:30-12:30"],["05:30-12:30"],[],[]]},{"id":"g08","name":"娟姐牛肉湯","full":"娟姐牛肉湯","group":"meal","tags":["牛肉湯","台式小吃"],"budget":2,"price":"$200-400","rating":4.8,"reviews":1713,"hot":false,"dist":333,"lat":23.003908,"lng":120.218624,"cat":"湯品餐廳","addr":"勝利路381號","hours":[[],["11:00-21:00"],["11:00-21:00"],["11:00-21:00"],["11:00-21:00"],["11:00-21:00"],[]]},{"id":"g09","name":"得意吉義式冰淇淋","full":"得意吉義式冰淇淋","group":"dessert","tags":[],"budget":1,"price":"（估計）","rating":4.6,"reviews":506,"hot":false,"dist":378,"lat":23.00278,"lng":120.224164,"cat":"雪糕店","addr":"東豐路323號","hours":[["12:00-21:00"],[],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"]]},{"id":"g10","name":"洄游丼飯所","full":"洄游丼飯所","group":"meal","tags":["日式"],"budget":3,"price":"$400-600","rating":4.9,"reviews":606,"hot":false,"dist":408,"lat":23.002804,"lng":120.224465,"cat":"日本餐廳","addr":"林森路三段71號","hours":[["11:30-14:30","17:30-20:30"],["11:30-14:30","17:30-20:30"],[],[],["11:30-14:30","17:30-20:30"],["11:30-14:30","17:30-20:30"],["11:30-14:30","17:30-20:30"]]},{"id":"g11","name":"牛A炒牛肉","full":"牛A炒牛肉","group":"meal","tags":["台式小吃"],"budget":1,"price":"$1-200","rating":4.8,"reviews":335,"hot":false,"dist":419,"lat":23.004877,"lng":120.222722,"cat":"中菜館","addr":"長榮路四段84巷2號","hours":[["10:00-14:30","16:30-19:50"],["10:00-14:30","16:30-19:50"],["10:00-14:30","16:30-19:50"],["10:00-14:30","16:30-19:50"],["10:00-14:30","16:30-19:50"],[],["10:00-14:30","16:30-19:50"]]},{"id":"g12","name":"尼法","full":"尼法","group":"meal","tags":["西式義式"],"budget":3,"price":"（估計）","rating":4.8,"reviews":4329,"hot":true,"dist":450,"lat":23.003847,"lng":120.217041,"cat":"法國餐廳","addr":"東豐路111號","hours":[["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"],["12:00-14:00","18:00-21:00"]]},{"id":"g13","name":"郭鍋食堂","full":"郭鍋食堂","group":"meal","tags":["便當簡餐"],"budget":2,"price":"$200-400","rating":4.6,"reviews":362,"hot":false,"dist":520,"lat":23.00482,"lng":120.224383,"cat":"亞洲 Fusion 菜餐廳","addr":"開元路212巷138號","hours":[[],[],["10:30-14:00","16:30-20:00"],["10:30-14:00","16:30-20:00"],["10:30-14:00","16:30-20:00"],["10:30-14:00","16:30-20:00"],[]]},{"id":"g14","name":"裊淡咖啡","full":"裊淡咖啡","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.9,"reviews":203,"hot":false,"dist":598,"lat":23.004435,"lng":120.215736,"cat":"咖啡店","addr":"前鋒路290巷10號","hours":[["16:00-00:00"],["16:00-00:00"],["16:00-00:00"],["16:00-00:00"],["16:00-00:00"],["16:00-00:00"],["16:00-00:00"]]},{"id":"g15","name":"Las Adelitas","full":"Las Adelitas","group":"meal","tags":["異國料理"],"budget":2,"price":"$200-400","rating":4.7,"reviews":450,"hot":false,"dist":638,"lat":23.001694,"lng":120.214468,"cat":"墨西哥餐廳","addr":"前鋒路159號","hours":[[],["11:00-15:00","17:00-20:30"],[],["11:00-15:00","17:00-20:30"],["11:00-15:00","17:00-20:30"],["11:00-15:00","17:00-20:30"],["11:00-15:00","17:00-20:30"]]},{"id":"g16","name":"小董牛肉湯爐","full":"小董牛肉湯爐","group":"meal","tags":["火鍋","牛肉湯","宵夜"],"budget":3,"price":"$400-600","rating":4.7,"reviews":6930,"hot":true,"dist":651,"lat":23.00037,"lng":120.226922,"cat":"火鍋餐廳","addr":"小東路157號","hours":[["17:00-03:00"],["17:00-03:00"],["17:00-03:00"],["17:00-03:00"],["17:00-03:00"],["17:00-03:00"],["17:00-03:00"]]},{"id":"g17","name":"百年土種蔘雞湯 成大店","full":"백년토종삼계탕 百年土種蔘雞湯 台南成大店","group":"meal","tags":["韓式"],"budget":3,"price":"$400-600","rating":4.8,"reviews":231,"hot":false,"dist":679,"lat":22.995853,"lng":120.218462,"cat":"韓國餐廳","addr":"勝利路118號","hours":[["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-22:00"],["11:00-22:00"]]},{"id":"g18","name":"燒肉Smile 成大店","full":"焼肉スマイル（燒肉Smile）台南成大店","group":"meal","tags":["燒肉","日式"],"budget":3,"price":"$400-600","rating":4.7,"reviews":219,"hot":false,"dist":679,"lat":22.995853,"lng":120.218462,"cat":"日式燒肉餐廳","addr":"勝利路118號","hours":[["11:00-14:30","17:30-22:00"],["11:00-14:30","17:30-22:00"],["11:00-14:30","17:30-22:00"],["11:00-14:30","17:30-22:00"],["11:00-14:30","17:30-22:00"],["11:00-22:00"],["11:00-22:00"]]},{"id":"g19","name":"築間幸福鍋物 台南成大店","full":"築間幸福鍋物 台南成大店","group":"meal","tags":["火鍋"],"budget":3,"price":"$400-600","rating":4.6,"reviews":4854,"hot":true,"dist":734,"lat":22.995406,"lng":120.218208,"cat":"火鍋餐廳","addr":"勝利路118號","hours":[["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"]]},{"id":"g20","name":"雷克斯咖啡吧","full":"雷克斯咖啡吧","group":"cafe","tags":[],"budget":1,"price":"$1-200","rating":4.8,"reviews":361,"hot":false,"dist":738,"lat":23.006344,"lng":120.225738,"cat":"咖啡店","addr":"南園街153巷2號","hours":[["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],[]]},{"id":"g21","name":"加依軒小籠湯包成大店","full":"加依軒小籠湯包成大店","group":"meal","tags":["台式小吃","麵食"],"budget":1,"price":"$1-200","rating":4.6,"reviews":1252,"hot":false,"dist":766,"lat":22.995579,"lng":120.217072,"cat":"輕食餐廳","addr":"育樂街42號","hours":[["10:30-23:15"],["10:30-23:15"],["10:30-23:15"],["10:30-23:15"],[],["10:30-23:00"],["10:30-23:00"]]},{"id":"g22","name":"泊飲茶館 長榮店","full":"泊飲茶館CHÂTEAU BLANC 長榮店","group":"drink","tags":[],"budget":1,"price":"$1-200","rating":4.8,"reviews":353,"hot":false,"dist":780,"lat":23.008611,"lng":120.220523,"cat":"冰品飲料店","addr":"長榮路五段27號","hours":[["10:00-21:00"],["10:00-21:00"],["10:00-21:00"],["10:00-21:00"],["10:00-21:00"],["10:00-21:00"],["11:00-19:00"]]},{"id":"g23","name":"BG韓式炸雞-台南成大店","full":"BG韓式炸雞-台南成大店","group":"meal","tags":["韓式"],"budget":1,"price":"$1-200","rating":4.7,"reviews":824,"hot":false,"dist":780,"lat":22.996129,"lng":120.215926,"cat":"韓國餐廳","addr":"育樂街66巷18號","hours":[["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"],["11:00-22:00"]]},{"id":"g24","name":"米楠印度料理","full":"米楠印度料理 Milan Indian Cuisine","group":"meal","tags":["異國料理"],"budget":2,"price":"$200-400","rating":4.8,"reviews":637,"hot":false,"dist":818,"lat":22.995386,"lng":120.216429,"cat":"印度餐廳","addr":"育樂街53-6號","hours":[[],["11:00-14:30","17:00-21:30"],["11:00-14:30","17:00-21:30"],["11:00-14:30","17:00-21:30"],["11:00-14:30","17:00-21:30"],["11:00-14:30","17:00-21:30"],["11:00-14:30","17:00-21:30"]]},{"id":"g25","name":"便當翔 光明店","full":"便當翔 Bento Xiang 光明店","group":"meal","tags":["便當簡餐"],"budget":1,"price":"$1-200","rating":4.6,"reviews":479,"hot":false,"dist":838,"lat":22.998597,"lng":120.228214,"cat":"餐廳","addr":"光明街48號","hours":[["11:00-14:00","16:30-19:30"],["11:00-14:00","16:30-19:30"],["11:00-14:00","16:30-19:30"],["11:00-14:00","16:30-19:30"],["11:00-14:00","16:30-19:30"],[],[]]},{"id":"g26","name":"念念Table","full":"念念Table","group":"meal","tags":["早午餐","便當簡餐"],"budget":2,"price":"$200-400","rating":4.9,"reviews":223,"hot":false,"dist":839,"lat":23.001578,"lng":120.228893,"cat":"沙律店","addr":"勝利街1巷54號","hours":[[],[],["11:30-14:30","16:30-18:30"],["11:30-14:30","16:30-18:30"],["11:30-14:30","16:30-18:30"],["11:30-14:30","16:30-18:30"],["11:30-14:30","16:30-18:30"]]},{"id":"g27","name":"賦于咖啡","full":"賦于咖啡","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.6,"reviews":433,"hot":false,"dist":856,"lat":22.993971,"lng":120.221821,"cat":"咖啡店","addr":"長榮路三段76號","hours":[[],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"],["09:00-17:00"]]},{"id":"g28","name":"大廳茶軒","full":"大廳茶軒","group":"cafe","tags":[],"budget":2,"price":"$200-800","rating":4.6,"reviews":227,"hot":false,"dist":860,"lat":22.996612,"lng":120.214283,"cat":"餐廳","addr":"大學路西段89號1樓","hours":[["12:00-22:00"],["12:00-22:00"],["12:00-22:00"],["12:00-22:00"],["12:00-22:00"],["12:00-22:00"],["12:00-22:00"]]},{"id":"g29","name":"動感滷味 東興店","full":"動感滷味-東興店（台南創始總店）","group":"meal","tags":["台式小吃"],"budget":1,"price":"$1-200","rating":4.8,"reviews":333,"hot":false,"dist":860,"lat":23.001283,"lng":120.229094,"cat":"麵店","addr":"小東路299巷27弄","hours":[["09:00-13:00","17:00-21:00"],["09:00-13:00","17:00-21:00"],["09:00-13:00","17:00-21:00"],["09:00-13:00","17:00-21:00"],["09:00-13:00","17:00-21:00"],[],["09:00-13:00","17:00-21:00"]]},{"id":"g30","name":"公園口八寶冰正宗老店","full":"公園口八寶冰正宗老店","group":"dessert","tags":[],"budget":1,"price":"$1-200","rating":4.7,"reviews":710,"hot":false,"dist":864,"lat":22.999957,"lng":120.212449,"cat":"冰品飲料店","addr":"公園南路1-2號","hours":[["12:00-23:30"],["17:10-23:30"],["12:00-23:30"],["12:00-23:30"],["00:20-23:30"],["12:30-23:30"],["12:30-23:30"]]},{"id":"g31","name":"Panorama caffe","full":"Panorama caffe","group":"cafe","tags":[],"budget":1,"price":"$1-200","rating":4.9,"reviews":310,"hot":false,"dist":873,"lat":23.009005,"lng":120.223531,"cat":"咖啡店","addr":"南園街2號","hours":[[],["12:30-19:00"],["12:30-19:00"],[],[],["12:30-19:00"],["12:30-19:00"]]},{"id":"g32","name":"龍鳳同心億麵攤","full":"龍鳳同心億麵攤","group":"meal","tags":["麵食","台式小吃"],"budget":1,"price":"$1-200","rating":4.6,"reviews":258,"hot":false,"dist":873,"lat":23.00877,"lng":120.224172,"cat":"中式麵食店","addr":"南園街23號","hours":[["10:30-14:00","16:00-20:00"],["10:30-14:00","16:00-20:00"],["10:30-14:00","16:00-20:00"],["10:30-14:00","16:00-20:00"],[],["10:30-14:00","16:00-20:00"],["10:30-14:00","16:00-20:00"]]},{"id":"g33","name":"有時候-慢烤杏仁豆腐冰","full":"有時候-慢烤杏仁豆腐冰","group":"dessert","tags":[],"budget":1,"price":"$1-200","rating":4.8,"reviews":605,"hot":false,"dist":880,"lat":23.008727,"lng":120.224445,"cat":"甜品餐廳","addr":"南園街29巷1號","hours":[["12:00-20:00"],[],["12:00-20:00"],["12:00-20:00"],["12:00-20:00"],["12:00-20:00"],["12:00-20:00"]]},{"id":"g34","name":"路咖啡 Road Café","full":"路咖啡Road Café/外帶咖啡吧","group":"cafe","tags":[],"budget":1,"price":"$1-200","rating":4.6,"reviews":218,"hot":false,"dist":883,"lat":23.009539,"lng":120.2204,"cat":"咖啡店","addr":"長榮路五段55號","hours":[[],["06:30-11:20"],["06:30-11:20"],[],["06:30-11:20"],["06:30-11:20"],[]]},{"id":"g35","name":"京正拉麵(育樂店)","full":"京正拉麵(育樂店)","group":"meal","tags":["日式","麵食"],"budget":1,"price":"$1-200","rating":4.6,"reviews":1109,"hot":false,"dist":887,"lat":22.995671,"lng":120.21491,"cat":"拉麵店","addr":"育樂街109號","hours":[["11:30-14:30","16:00-20:30"],["11:30-14:30","16:00-20:30"],["11:30-14:30","16:00-20:30"],["11:30-14:30","16:00-20:30"],["11:30-14:30","16:00-20:30"],["11:30-14:30","16:00-21:00"],["11:30-14:30","16:00-21:00"]]},{"id":"g36","name":"昆布食堂","full":"昆布食堂","group":"meal","tags":["日式"],"budget":1,"price":"$1-200","rating":4.6,"reviews":711,"hot":false,"dist":909,"lat":23.009457,"lng":120.218264,"cat":"日本餐廳","addr":"開元路249巷42號","hours":[[],["11:00-14:00"],["11:00-14:00"],["11:00-14:00"],["11:00-14:00"],["11:00-14:00"],[]]},{"id":"g37","name":"藝鍋物北門店","full":"藝鍋物北門店","group":"meal","tags":["火鍋"],"budget":2,"price":"$200-400","rating":4.6,"reviews":659,"hot":false,"dist":914,"lat":23.008341,"lng":120.215592,"cat":"火鍋餐廳","addr":"北門路二段368號","hours":[["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"],["11:00-14:00","17:00-22:00"]]},{"id":"g38","name":"鮨瑀壽司","full":"鮨瑀壽司","group":"meal","tags":["日式"],"budget":3,"price":"$400-600","rating":4.9,"reviews":1603,"hot":false,"dist":917,"lat":23.009536,"lng":120.22312,"cat":"壽司店","addr":"北園街13-3號","hours":[[],["11:30-14:00","17:30-21:00"],["11:30-14:00","17:30-21:00"],["11:30-14:00","17:30-21:00"],["11:30-14:00","17:30-21:00"],["11:30-14:00","17:30-21:00"],["11:30-14:00","17:30-21:00"]]},{"id":"g39","name":"熟鍋","full":"熟鍋","group":"meal","tags":["火鍋"],"budget":3,"price":"$400-600","rating":4.9,"reviews":4409,"hot":true,"dist":959,"lat":22.998685,"lng":120.229516,"cat":"火鍋餐廳","addr":"東和路30號","hours":[["11:30-14:00","17:00-22:00"],["11:30-14:00","17:00-22:00"],["11:30-14:00","17:00-22:00"],["11:30-14:00","17:00-22:00"],["11:30-14:00","17:00-22:00"],["11:30-22:00"],["11:30-22:00"]]},{"id":"g40","name":"KOEMON","full":"KOEMON","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.6,"reviews":562,"hot":false,"dist":970,"lat":22.998469,"lng":120.21185,"cat":"咖啡店","addr":"北門路二段15巷17號","hours":[["11:30-18:00"],["11:30-18:00"],["11:30-18:00"],[],["11:30-18:00"],["11:30-18:00"],["11:30-18:00"]]},{"id":"g41","name":"榕樹下璞味綿綿冰","full":"榕樹下璞味綿綿冰","group":"dessert","tags":[],"budget":1,"price":"$1-200","rating":4.7,"reviews":1747,"hot":false,"dist":981,"lat":22.994963,"lng":120.22701,"cat":"甜品餐廳","addr":"東安路172-1號","hours":[["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"],["12:00-21:00"]]},{"id":"g42","name":"甜在心咖啡館","full":"甜在心咖啡館","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.7,"reviews":1002,"hot":false,"dist":996,"lat":22.999066,"lng":120.211366,"cat":"咖啡店","addr":"北忠街58巷12號","hours":[["09:30-17:30"],[],["12:00-17:00"],["09:30-17:30"],["09:30-17:30"],["09:30-17:30"],["09:30-17:30"]]},{"id":"g43","name":"NOTHING but coffee","full":"NOTHING but coffee","group":"cafe","tags":[],"budget":2,"price":"$200-400","rating":4.8,"reviews":317,"hot":false,"dist":1007,"lat":22.992543,"lng":120.220906,"cat":"咖啡店","addr":"東寧路15巷14號","hours":[["07:30-17:00"],["07:30-17:00"],[],["07:30-17:00"],["07:30-17:00"],["10:00-18:00"],["10:00-18:00"]]},{"id":"g44","name":"莘咖哩 Veganers World","full":"莘咖哩 Veganers World","group":"meal","tags":["異國料理","素食友善"],"budget":2,"price":"$200-400","rating":4.9,"reviews":2938,"hot":true,"dist":1008,"lat":22.998922,"lng":120.230109,"cat":"印度餐廳","addr":"東和路2號","hours":[["11:00-14:00","17:00-21:00"],[],["11:00-14:00","17:00-21:00"],["11:00-14:00","17:00-21:00"],["11:00-14:00","17:00-21:00"],["11:00-14:00","17:00-21:00"],["11:00-14:00","17:00-21:00"]]},{"id":"g45","name":"東安豆花","full":"東安豆花","group":"dessert","tags":[],"budget":1,"price":"（估計）","rating":4.7,"reviews":231,"hot":false,"dist":1040,"lat":22.993992,"lng":120.226606,"cat":"甜品店","addr":"東安路137號","hours":[["10:30-14:00","16:00-21:00"],["10:30-14:00","16:00-21:00"],["10:30-14:00","16:00-21:00"],["10:30-14:00","16:00-21:00"],["10:30-14:00","16:00-21:00"],["10:30-21:00"],[]]},{"id":"g46","name":"MAO WANG 貓王龍貓餐廳","full":"MAO WANG 貓王龍貓餐廳","group":"meal","tags":["西式義式","宵夜"],"budget":2,"price":"$200-400","rating":4.6,"reviews":293,"hot":false,"dist":1041,"lat":22.993768,"lng":120.226268,"cat":"餐廳","addr":"凱旋路330號","hours":[[],[],["13:30-23:00"],["13:30-23:00"],["21:00-02:00"],["11:30-01:00"],["11:30-23:00"]]},{"id":"g47","name":"91 Brunch","full":"91 Brunch","group":"meal","tags":["早午餐"],"budget":2,"price":"$200-400","rating":4.8,"reviews":435,"hot":false,"dist":1042,"lat":22.992384,"lng":120.222515,"cat":"早午餐餐廳","addr":"長榮路三段24巷24號","hours":[["07:30-16:00"],["07:30-16:00"],["07:30-16:00"],["07:30-16:00"],["07:30-16:00"],["09:00-16:00"],["09:00-16:00"]]},{"id":"g48","name":"艾麥全日早午餐","full":"艾麥全日早午餐","group":"meal","tags":["早午餐"],"budget":1,"price":"$1-200","rating":4.7,"reviews":253,"hot":false,"dist":1066,"lat":23.010899,"lng":120.223239,"cat":"早午餐餐廳","addr":"北園街28-1號","hours":[[],[],["07:30-14:00"],["07:30-14:00"],["07:30-14:00"],["07:30-14:00"],["07:30-14:00"]]},{"id":"g49","name":"QQ田甜品工坊","full":"QQ田甜品工坊(台南東安店)","group":"dessert","tags":[],"budget":1,"price":"$1-200","rating":4.7,"reviews":3003,"hot":true,"dist":1071,"lat":22.993769,"lng":120.226797,"cat":"冰品飲料店","addr":"東安路120號","hours":[["13:00-21:00"],["13:00-21:00"],["13:00-21:00"],["13:00-21:00"],["13:00-21:00"],["13:00-21:00"],["13:00-21:00"]]},{"id":"g50","name":"春禾日式鍋物","full":"春禾日式鍋物","group":"meal","tags":["火鍋","日式"],"budget":3,"price":"$400-600","rating":4.8,"reviews":1321,"hot":false,"dist":1078,"lat":22.993765,"lng":120.214494,"cat":"火鍋餐廳","addr":"育樂街196號","hours":[["12:00-15:30","17:00-22:00"],["12:00-15:30","17:00-22:00"],[],["12:00-15:30","17:00-22:00"],["12:00-15:30","17:00-22:00"],["12:00-15:30","17:00-22:00"],["12:00-15:30","17:00-22:00"]]},{"id":"g51","name":"啾醬韓式炸雞","full":"啾醬 韓式炸雞 쮸짱치킨","group":"meal","tags":["韓式","宵夜"],"budget":1,"price":"$1-200","rating":4.9,"reviews":838,"hot":false,"dist":1083,"lat":22.993582,"lng":120.214699,"cat":"韓國餐廳","addr":"育樂街193號","hours":[[],[],["16:00-01:30"],["16:00-01:30"],["16:00-02:00"],["16:00-02:00"],["16:00-01:30"]]},{"id":"g52","name":"洁茂牛肉麵館","full":"洁茂牛肉麵館","group":"meal","tags":["麵食"],"budget":1,"price":"$1-200","rating":4.6,"reviews":1332,"hot":false,"dist":1085,"lat":23.010529,"lng":120.216435,"cat":"中式麵食店","addr":"北門路二段568號","hours":[["11:00-20:00"],["11:00-20:00"],["11:00-20:00"],["11:00-20:00"],["11:00-20:00"],["11:00-20:00"],["11:00-20:00"]]},{"id":"g53","name":"賀也拉麵（育樂街）","full":"賀也拉麵（育樂街）","group":"meal","tags":["日式","麵食"],"budget":2,"price":"$200-400","rating":4.9,"reviews":1065,"hot":false,"dist":1090,"lat":22.9936,"lng":120.214547,"cat":"拉麵店","addr":"育樂街210號","hours":[["11:00-13:30","17:00-20:15"],[],["11:00-13:30","17:00-20:15"],["11:00-13:30","17:00-20:15"],["11:00-13:30","17:00-20:15"],["11:00-13:30","17:00-20:15"],["11:00-13:30","17:00-20:15"]]},{"id":"g54","name":"邁滋味早午餐","full":"邁滋味早午餐","group":"meal","tags":["早午餐"],"budget":1,"price":"$1-200","rating":4.6,"reviews":261,"hot":false,"dist":1092,"lat":23.011145,"lng":120.223211,"cat":"早午餐餐廳","addr":"北園街32號","hours":[["05:00-12:30"],["05:00-12:30"],["05:00-12:30"],[],["05:00-12:30"],["05:00-13:00"],["05:00-13:00"]]},{"id":"g55","name":"Pasta Now 鬧義麵 勝利店","full":"Pasta Now 鬧義麵 勝利店","group":"meal","tags":["西式義式"],"budget":2,"price":"$200-400","rating":4.9,"reviews":1364,"hot":false,"dist":1117,"lat":22.991958,"lng":120.217651,"cat":"義大利麵餐廳","addr":"","hours":[["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"],["11:30-14:30","17:00-21:00"]]},{"id":"g56","name":"狐獴先生早午餐","full":"狐獴先生早午餐","group":"meal","tags":["早午餐"],"budget":2,"price":"$200-400","rating":4.8,"reviews":3620,"hot":true,"dist":1129,"lat":22.991512,"lng":120.221993,"cat":"早午餐餐廳","addr":"東寧路120巷9號","hours":[["09:00-16:30"],["09:00-16:30"],["09:00-16:30"],["09:00-16:30"],["09:00-16:30"],["09:00-16:30"],["09:00-16:30"]]},{"id":"g57","name":"我們工作室","full":"我們工作室","group":"dessert","tags":[],"budget":1,"price":"（估計）","rating":4.6,"reviews":360,"hot":false,"dist":1150,"lat":23.010556,"lng":120.226315,"cat":"糕餅店","addr":"開元路394巷27弄44號","hours":[[],[],[],[],["14:00-19:00"],["14:00-19:00"],["14:00-19:00"]]},{"id":"g58","name":"路迷Lumi pasta&tea","full":"路迷Lumi pasta&tea","group":"meal","tags":["西式義式"],"budget":2,"price":"$200-400","rating":4.7,"reviews":295,"hot":false,"dist":1175,"lat":22.996866,"lng":120.210437,"cat":"義大利麵餐廳","addr":"","hours":[[],["11:00-14:00","17:00-20:30"],["11:00-14:00","17:00-20:30"],["11:00-14:00","17:00-20:30"],["11:00-14:00","17:00-20:30"],["11:00-14:00","17:00-20:30"],["11:00-14:00","17:00-20:30"]]},{"id":"g59","name":"綿綿土司","full":"綿綿土司","group":"meal","tags":["早午餐"],"budget":1,"price":"$1-200","rating":4.7,"reviews":322,"hot":false,"dist":1179,"lat":22.995121,"lng":120.229824,"cat":"吐司餐廳","addr":"東興路262號","hours":[[],["06:30-13:30"],["06:30-13:30"],["06:30-13:30"],["06:30-13:30"],["06:30-13:30"],["06:30-13:00"]]},{"id":"g60","name":"吉米THAI","full":"吉米THAI","group":"meal","tags":["異國料理"],"budget":2,"price":"$200-400","rating":4.6,"reviews":2459,"hot":true,"dist":1183,"lat":23.005883,"lng":120.231278,"cat":"泰國餐廳","addr":"勝學路212號","hours":[[],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"],["11:00-14:30","17:00-22:00"]]},{"id":"g61","name":"北園義法小館","full":"北園義法小館","group":"meal","tags":["西式義式"],"budget":3,"price":"$400-600","rating":4.6,"reviews":518,"hot":false,"dist":1191,"lat":23.012124,"lng":120.222858,"cat":"義法料理","addr":"","hours":[[],[],["17:00-21:00"],["17:00-21:00"],["17:00-21:00"],["11:00-14:00","17:00-21:00"],["11:00-14:00","17:00-21:00"]]},{"id":"g62","name":"雄雄食社","full":"雄雄食社","group":"dessert","tags":[],"budget":1,"price":"（估計）","rating":4.7,"reviews":801,"hot":false,"dist":1199,"lat":22.99827,"lng":120.231838,"cat":"甜品店","addr":"東光路二段152號","hours":[[],[],["13:00-18:30"],["13:00-18:30"],["13:00-18:30"],["13:00-18:30"],["13:00-18:30"]]}]/*END*/;
+const CENTER = { lat: 23.0016, lng: 120.2207 }; // 國立成功大學醫學院
+const GROUPS = { meal: '🍱 正餐', drink: '🧋 飲料', dessert: '🍧 甜點冰品', cafe: '☕ 咖啡廳' };
+const TAGS = ['早午餐', '日式', '韓式', '火鍋', '燒肉', '台式小吃', '牛肉湯', '麵食', '異國料理', '西式義式', '便當簡餐', '素食友善', '宵夜'];
+const BUDGETS = { 1: '$ 200 以下', 2: '$$ 200–400', 3: '$$$ 400 以上' };
+const DAYS = ['一', '二', '三', '四', '五', '六', '日'];
+const COLORS = ['#e8553d', '#f2a33a', '#2a9d8f', '#e9c46a', '#8ab17d', '#d1495b', '#5a8dee', '#f4845f', '#6d597a', '#43aa8b'];
+const SOON = 30; // 分鐘內打烊視為「即將打烊」
+const KEY = 'ncku-food-roulette-v1';
+const DEFAULT_FILTERS = { mode: 'now', pday: null, ptime: '12:00', groups: ['meal'], tags: [], budgets: [1, 2, 3], dist: 1200, noqueue: false };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ---------- 狀態與儲存 ----------
+let state = { custom: [], deleted: [], black: [], filters: { ...DEFAULT_FILTERS } };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (saved) state = { ...state, ...saved, filters: { ...DEFAULT_FILTERS, ...saved.filters } };
+} catch (e) { /* 無法讀取就用預設 */ }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+const F = () => state.filters;
+const allShops = () => DEFAULT_SHOPS.filter(s => !state.deleted.includes(s.id)).concat(state.custom);
+
+// ---------- 營業時間 ----------
+const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const fmtMin = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+function segs(shop, day) {
+  return (shop.hours[day] || []).map(s => { const [a, b] = s.split('-').map(toMin); return [a, b <= a ? b + 1440 : b]; });
+}
+// day: 0=星期一；min: 當天第幾分鐘
+function statusAt(shop, day, min) {
+  for (const [a, b] of segs(shop, day)) if (min >= a && min < b) return { open: true, left: b - min, close: b };
+  const prev = (day + 6) % 7; // 前一天跨午夜的時段
+  for (const [a, b] of segs(shop, prev)) if (b > 1440 && min < b - 1440) return { open: true, left: b - 1440 - min, close: b - 1440 };
+  let next = null;
+  for (const [a] of segs(shop, day)) if (a > min && (next === null || a < next)) next = a;
+  return { open: false, next };
+}
+function hoursText(shop, day) {
+  const h = shop.hours[day] || [];
+  return h.length ? h.join('、') : '公休';
+}
+function when() {
+  const f = F();
+  if (f.mode === 'custom') return { day: f.pday ?? todayIdx(), min: toMin(f.ptime || '12:00'), label: `星期${DAYS[f.pday ?? todayIdx()]} ${f.ptime}` };
+  const d = new Date();
+  return { day: todayIdx(), min: d.getHours() * 60 + d.getMinutes(), label: '現在' };
+}
+const todayIdx = () => (new Date().getDay() + 6) % 7;
+const walk = d => Math.max(1, Math.round(d * 1.3 / 75)); // 直線 × 1.3 ≈ 實際路徑，步行 75 m/分
+
+// ---------- 篩選 ----------
+function check(shop) {
+  const f = F(), w = when();
+  const st = statusAt(shop, w.day, w.min);
+  const reasons = [];
+  if (state.black.includes(shop.id)) reasons.push('黑名單');
+  if (!f.groups.includes(shop.group)) reasons.push('類別');
+  if (shop.group === 'meal' && f.tags.length && !shop.tags.some(t => f.tags.includes(t))) reasons.push('細分');
+  if (!f.budgets.includes(shop.budget)) reasons.push('預算');
+  if (shop.dist > f.dist) reasons.push('距離');
+  if (f.noqueue && shop.hot) reasons.push('排隊');
+  if (f.mode !== 'any') {
+    if (!st.open) reasons.push('沒開');
+    else if (st.left <= SOON) reasons.push('快打烊');
+  }
+  return { ok: reasons.length === 0, reasons, st };
+}
+const candidates = () => allShops().filter(s => check(s).ok);
+
+// ---------- 篩選 UI ----------
+function chip(label, pressed, onClick) {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.type = 'button'; b.textContent = label;
+  b.setAttribute('aria-pressed', pressed);
+  b.addEventListener('click', onClick);
+  return b;
+}
+function toggleIn(arr, v) { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); }
+function drawFilters() {
+  const f = F();
+  document.querySelectorAll('#timemode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === f.mode));
+  $('timepick').classList.toggle('show', f.mode === 'custom');
+  $('timehint').textContent = { now: '只抽現在營業中、而且 30 分鐘內不會打烊的店', custom: '只抽那個時間有營業、而且 30 分鐘內不會打烊的店', any: '不管營業時間，全部都抽（適合先決定、之後再去）' }[f.mode];
+  $('pday').value = f.pday ?? todayIdx();
+  $('ptime').value = f.ptime;
+  const g = $('groups'); g.innerHTML = '';
+  Object.entries(GROUPS).forEach(([k, v]) => g.appendChild(chip(v, f.groups.includes(k), () => { toggleIn(f.groups, k); update(); })));
+  $('subwrap').hidden = !f.groups.includes('meal');
+  const t = $('tags'); t.innerHTML = '';
+  TAGS.forEach(k => t.appendChild(chip(k, f.tags.includes(k), () => { toggleIn(f.tags, k); update(); })));
+  const bu = $('budgets'); bu.innerHTML = '';
+  Object.entries(BUDGETS).forEach(([k, v]) => bu.appendChild(chip(v, f.budgets.includes(+k), () => { toggleIn(f.budgets, +k); update(); })));
+  $('dist').value = f.dist;
+  $('distv').textContent = `${f.dist} 公尺（步行約 ${walk(f.dist)} 分）`;
+  $('noqueue').checked = f.noqueue;
+}
+document.querySelectorAll('#timemode button').forEach(b => b.addEventListener('click', () => { F().mode = b.dataset.v; if (b.dataset.v === 'custom' && F().pday == null) F().pday = todayIdx(); update(); }));
+DAYS.forEach((d, i) => $('pday').insertAdjacentHTML('beforeend', `<option value="${i}">星期${d}</option>`));
+$('pday').addEventListener('change', e => { F().pday = +e.target.value; update(); });
+$('ptime').addEventListener('change', e => { if (e.target.value) { F().ptime = e.target.value; update(); } });
+$('dist').addEventListener('input', e => { F().dist = +e.target.value; update(); });
+$('noqueue').addEventListener('change', e => { F().noqueue = e.target.checked; update(); });
+$('resetf').addEventListener('click', () => { state.filters = JSON.parse(JSON.stringify(DEFAULT_FILTERS)); update(); toast('篩選條件已重設'); });
+
+// ---------- 輪盤 ----------
+const canvas = $('wheel'), ctx = canvas.getContext('2d');
+let wheelShops = [], angle = 0, spinning = false;
+function sizeCanvas() {
+  const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+  drawWheel();
+}
+function drawWheel() {
+  const W = canvas.width, R = W / 2 - 4 * (window.devicePixelRatio || 1), c = W / 2, n = wheelShops.length;
+  ctx.clearRect(0, 0, W, W);
+  const css = getComputedStyle(document.documentElement);
+  if (!n) {
+    ctx.beginPath(); ctx.arc(c, c, R, 0, Math.PI * 2); ctx.fillStyle = css.getPropertyValue('--line'); ctx.fill();
+    return;
+  }
+  const step = Math.PI * 2 / n;
+  wheelShops.forEach((s, i) => {
+    const a0 = angle + i * step - Math.PI / 2;
+    ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, R, a0, a0 + step); ctx.closePath();
+    // 最後一格若和第一格同色（會黏在一起），改用下一個顏色
+    const ci = i === n - 1 && n > 1 && i % COLORS.length === 0 ? 1 : i % COLORS.length;
+    ctx.fillStyle = COLORS[ci];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(1, W / 300); ctx.stroke();
+    // 文字
+    // 左半邊的字轉 180°，才不會上下顛倒
+    const mid = a0 + step / 2, flip = Math.cos(mid) < 0;
+    ctx.save(); ctx.translate(c, c); ctx.rotate(flip ? mid + Math.PI : mid);
+    const fs = Math.max(W / 46, Math.min(W / 22, (step * R) * 0.5));
+    ctx.font = `700 ${fs}px "Noto Sans TC", sans-serif`; ctx.fillStyle = '#fff'; ctx.textAlign = flip ? 'left' : 'right'; ctx.textBaseline = 'middle';
+    let label = s.name; const maxW = R * 0.62;
+    while (ctx.measureText(label).width > maxW && label.length > 2) label = label.slice(0, -1);
+    if (label !== s.name) label = label.slice(0, -1) + '…';
+    if (n <= 70) ctx.fillText(label, (flip ? -1 : 1) * (R - W / 28), 0);
+    ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(c, c, R, 0, Math.PI * 2); ctx.lineWidth = W / 60; ctx.strokeStyle = css.getPropertyValue('--card'); ctx.stroke();
+}
+$('spin').addEventListener('click', () => {
+  if (spinning || !wheelShops.length) return;
+  spinning = true; $('spin').disabled = true;
+  lastPick = null;
+  $('result').innerHTML = '<div class="placeholder"><div class="big">🎡</div>轉動中…</div>';
+  const n = wheelShops.length, step = Math.PI * 2 / n;
+  const win = Math.floor(Math.random() * n);
+  // 讓第 win 格的中心停在指針（正上方）
+  const jitter = (Math.random() - 0.5) * step * 0.6;
+  const target = -(win * step + step / 2) + jitter;
+  const base = angle - (angle % (Math.PI * 2));
+  const end = base + Math.PI * 2 * (5 + Math.floor(Math.random() * 2)) + ((target % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const start = angle, t0 = performance.now(), dur = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 300 : 4200;
+  const tick = now => {
+    const k = Math.min((now - t0) / dur, 1);
+    angle = start + (end - start) * (1 - Math.pow(1 - k, 4));
+    drawWheel();
+    if (k < 1) requestAnimationFrame(tick);
+    else { spinning = false; $('spin').disabled = false; showResult(wheelShops[win]); }
+  };
+  requestAnimationFrame(tick);
+});
+
+// ---------- 結果 ----------
+let lastPick = null;
+function statusLine(shop) {
+  const w = when(), st = statusAt(shop, w.day, w.min);
+  if (F().mode === 'any') {
+    const d = new Date(), now = statusAt(shop, todayIdx(), d.getHours() * 60 + d.getMinutes());
+    return now.open ? `<span class="status ok">現在營業中</span>・${fmtMin(now.close)} 打烊` : `<span class="status off">現在沒開</span>`;
+  }
+  if (!st.open) return `<span class="status off">${w.label}沒開</span>`;
+  const h = Math.floor(st.left / 60), m = st.left % 60;
+  const left = h ? `${h} 小時 ${m} 分` : `${m} 分鐘`;
+  return `<span class="status ${st.left <= 60 ? 'warn' : 'ok'}">${w.label === '現在' ? '營業中' : w.label + ' 有開'}</span>・${fmtMin(st.close)} 打烊（還有 ${left}）`;
+}
+function mapUrl(s) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((s.full || s.name) + ' ' + (s.addr || '台南')); }
+function showResult(s) {
+  lastPick = s;
+  const day = when().day;
+  $('result').innerHTML = `<div class="pick">
+    <div class="kicker">🎉 今天就吃這家！</div>
+    <h3>${esc(s.name)}</h3>
+    <div class="meta">
+      <span class="tag">${GROUPS[s.group]}</span>
+      ${s.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}
+      ${s.hot ? '<span class="tag hot">🔥 熱門・可能要排隊</span>' : ''}
+      ${s.custom ? '<span class="tag">自己新增</span>' : ''}
+    </div>
+    <dl class="facts">
+      ${s.rating ? `<dt>評分</dt><dd>⭐ ${s.rating}（${s.reviews.toLocaleString()} 則評論）</dd>` : ''}
+      <dt>距離</dt><dd>${s.dist} 公尺・步行約 ${walk(s.dist)} 分鐘</dd>
+      <dt>預算</dt><dd>${'$'.repeat(s.budget)}${s.price && !s.custom ? `（${esc(s.price)}）` : ''}</dd>
+      <dt>星期${DAYS[day]}</dt><dd>${esc(hoursText(s, day))}</dd>
+      <dt>狀態</dt><dd>${statusLine(s)}</dd>
+      ${s.addr ? `<dt>地址</dt><dd>${esc(s.addr)}</dd>` : ''}
+    </dl>
+    <div class="actions">
+      <a class="btn brand" href="${mapUrl(s)}" target="_blank" rel="noopener">📍 Google 地圖</a>
+      <button class="btn ghost" id="ban">🚫 不要再抽到這家</button>
+      <button class="btn ghost" id="again">🔄 再轉一次</button>
+    </div></div>`;
+  $('ban').addEventListener('click', () => { ban(s.id); });
+  $('again').addEventListener('click', () => $('spin').click());
+}
+function ban(id) {
+  if (!state.black.includes(id)) state.black.push(id);
+  const s = allShops().find(x => x.id === id);
+  toast(`已把「${s ? s.name : '這家店'}」加入黑名單`);
+  if (lastPick && lastPick.id === id) resetResult();
+  update();
+}
+function resetResult() {
+  lastPick = null;
+  $('result').innerHTML = '<div class="placeholder"><div class="big">🍜</div>設定好條件，按中間的「開轉！」<br>讓輪盤幫你決定。</div>';
+}
+
+// ---------- 清單 ----------
+function drawList() {
+  const q = $('search').value.trim().toLowerCase();
+  const w = when();
+  const shops = allShops().slice().sort((a, b) => a.dist - b.dist);
+  const ul = $('shoplist'); ul.innerHTML = '';
+  let shown = 0;
+  shops.forEach(s => {
+    const hay = (s.name + s.full + s.cat + s.tags.join('') + GROUPS[s.group]).toLowerCase();
+    if (q && !hay.includes(q)) return;
+    shown++;
+    const c = check(s), st = statusAt(s, w.day, w.min);
+    const dot = st.open ? (st.left <= SOON ? 'warn' : 'ok') : 'off';
+    const stTxt = st.open ? `營業到 ${fmtMin(st.close)}` : (st.next != null ? `${fmtMin(st.next)} 開` : `今天${(s.hours[w.day] || []).length ? '已打烊' : '公休'}`);
+    const li = document.createElement('li');
+    if (!c.ok) li.className = 'out';
+    li.innerHTML = `<div class="nm">${esc(s.name)}<small>${s.rating ? '⭐' + s.rating + '・' : ''}${s.dist}m・${'$'.repeat(s.budget)}</small></div>
+      <div class="ln2"><i class="dot ${dot}"></i>${stTxt}・${GROUPS[s.group].slice(2)}${s.tags.length ? '／' + s.tags.join('、') : ''}${c.ok ? '' : '・<b>不符：' + c.reasons.join('、') + '</b>'}</div>
+      <div class="ops">${state.black.includes(s.id) ? '' : `<button class="btn ghost small" data-ban="${s.id}" title="加入黑名單">🚫</button>`}
+      <button class="btn ghost small" data-del="${s.id}" title="刪除這家店">🗑️</button></div>`;
+    ul.appendChild(li);
+  });
+  if (!shown) ul.innerHTML = '<li class="muted">找不到符合的店家</li>';
+  $('listcount').textContent = `共 ${allShops().length} 家（${w.label === '現在' ? '現在' : w.label}）`;
+}
+$('search').addEventListener('input', drawList);
+$('shoplist').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.ban) ban(b.dataset.ban);
+  if (b.dataset.del) {
+    const id = b.dataset.del, s = allShops().find(x => x.id === id);
+    if (!confirm(`確定要刪除「${s.name}」嗎？`)) return;
+    if (id.startsWith('u')) state.custom = state.custom.filter(x => x.id !== id);
+    else state.deleted.push(id);
+    state.black = state.black.filter(x => x !== id);
+    if (lastPick && lastPick.id === id) resetResult();
+    toast(`已刪除「${s.name}」`);
+    update();
+  }
+});
+$('restore').addEventListener('click', () => {
+  if (!confirm('恢復預設的 63 家店？（你自己新增的店會保留）')) return;
+  state.deleted = [];
+  toast('已恢復預設店家');
+  update();
+});
+
+// ---------- 黑名單 ----------
+function drawBlack() {
+  const ul = $('blist'); ul.innerHTML = '';
+  const shops = allShops();
+  const list = state.black.map(id => shops.find(s => s.id === id)).filter(Boolean);
+  $('bcount').textContent = list.length ? `${list.length} 家` : '';
+  if (!list.length) { ul.innerHTML = '<li class="muted">目前沒有。抽到不想去的店，按「不要再抽到這家」就會出現在這裡。</li>'; return; }
+  list.forEach(s => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${esc(s.name)}</span><button class="btn ghost small" data-unban="${s.id}">還原</button>`;
+    ul.appendChild(li);
+  });
+}
+$('blist').addEventListener('click', e => {
+  const id = e.target.dataset && e.target.dataset.unban; if (!id) return;
+  state.black = state.black.filter(x => x !== id);
+  toast('已從黑名單還原');
+  update();
+});
+
+// ---------- 新增店家 ----------
+const form = $('addform');
+TAGS.forEach(t => form.tag.insertAdjacentHTML('beforeend', `<option>${t}</option>`));
+DAYS.forEach((d, i) => $('adddays').insertAdjacentHTML('beforeend', `<label><input type="checkbox" value="${i}" checked><span>${d}</span></label>`));
+form.group.addEventListener('change', () => { form.tag.disabled = form.group.value !== 'meal'; });
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const err = $('adderr'); err.textContent = '';
+  const name = form.name.value.trim();
+  const segsTxt = form.hours.value.split(/[,，、\s]+/).filter(Boolean);
+  const okSeg = segsTxt.every(s => /^([01]?\d|2[0-4]):[0-5]\d-([01]?\d|2[0-4]):[0-5]\d$/.test(s));
+  const days = [...$('adddays').querySelectorAll('input:checked')].map(i => +i.value);
+  if (!name) { err.textContent = '請輸入店名'; return; }
+  if (!segsTxt.length || !okSeg) { err.textContent = '營業時段格式要像 11:00-14:00, 17:00-21:00'; return; }
+  if (!days.length) { err.textContent = '至少選一天營業日'; return; }
+  const norm = segsTxt.map(s => s.split('-').map(t => t.padStart(5, '0')).join('-'));
+  const shop = {
+    id: 'u' + Date.now(), name, full: name, custom: true,
+    group: form.group.value, tags: form.group.value === 'meal' && form.tag.value ? [form.tag.value] : [],
+    budget: +form.budget.value, price: '', rating: null, reviews: 0, hot: form.hot.checked,
+    dist: Math.max(0, +form.dist.value || 0), addr: '', cat: '自己新增',
+    hours: DAYS.map((_, i) => days.includes(i) ? norm : []),
+  };
+  state.custom.push(shop);
+  form.name.value = '';
+  const c = check(shop);
+  toast(c.ok ? `已加入「${name}」，它現在在輪盤上了！` : `已加入「${name}」（目前不符合篩選：${c.reasons.join('、')}）`);
+  update();
+});
+
+// ---------- Toast ----------
+let tt;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600); }
+
+// ---------- 主更新 ----------
+function update() {
+  save();
+  drawFilters();
+  const next = candidates();
+  // 輪盤內容有變才重設角度，避免無謂的跳動
+  const changed = next.map(s => s.id).join() !== wheelShops.map(s => s.id).join();
+  wheelShops = next;
+  if (changed) { angle = 0; }
+  drawWheel();
+  $('empty').classList.toggle('show', !wheelShops.length);
+  $('spin').disabled = !wheelShops.length || spinning;
+  $('count').innerHTML = `輪盤上有 <b>${wheelShops.length}</b> 家店`;
+  drawList();
+  drawBlack();
+  tickClock();
+}
+function tickClock() {
+  const d = new Date();
+  $('clock').textContent = `星期${DAYS[todayIdx()]} ${fmtMin(d.getHours() * 60 + d.getMinutes())}`;
+  const n = allShops().filter(s => statusAt(s, todayIdx(), d.getHours() * 60 + d.getMinutes()).open).length;
+  $('opencount').textContent = `現在有 ${n} 家營業中`;
+}
+setInterval(() => { if (!spinning) { F().mode === 'now' ? update() : tickClock(); } }, 30000);
+window.addEventListener('resize', sizeCanvas);
+update();
+sizeCanvas();
+document.fonts && document.fonts.ready.then(drawWheel);
+</script>
+</body>
+</html>
